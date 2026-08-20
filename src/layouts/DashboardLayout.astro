@@ -1,5 +1,5 @@
 ---
-// DashboardLayout.astro — dashboard wrapper layout
+// DashboardLayout.astro — dashboard wrapper layout (Dante theme)
 import '../styles/report-theme.css';
 
 interface Props {
@@ -11,7 +11,7 @@ const { title = 'AI Research — Reports', description = 'Research reports and d
 ---
 
 <!doctype html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="antialiased break-words">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -26,7 +26,7 @@ const { title = 'AI Research — Reports', description = 'Research reports and d
       }
     </script>
   </head>
-  <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0d1117] dark:text-slate-200 transition-colors">
+  <body class="min-h-screen" style="background-color: rgb(var(--color-bg-main)); color: rgb(var(--color-text-main));">
     <slot />
   </body>
 </html>

@@ -5,14 +5,22 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'SF Mono', 'Menlo', 'Consolas', 'monospace'],
+        sans: ['"Nunito Sans Variable"', 'Nunito Sans', 'ui-sans-serif', 'system-ui', 'sans-serif', '"Apple Color Emoji"', '"Segoe UI Emoji"', 'Segoe UI Symbol', '"Noto Color Emoji"'],
+        serif: ['ui-serif', 'Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', '"Liberation Mono"', '"Courier New"', 'monospace'],
       },
       colors: {
-        accent: {
-          DEFAULT: '#6366f1',
-          hover: '#4f46e5',
-          light: '#818cf8',
+        // Dante theme — warm paper + ink (matches shrutsureja.com)
+        main: {
+          DEFAULT: 'rgb(var(--color-text-main) / <alpha-value>)',
+          muted: 'rgb(var(--color-bg-muted) / <alpha-value>)',
+        },
+        bg: {
+          DEFAULT: 'rgb(var(--color-bg-main) / <alpha-value>)',
+          muted: 'rgb(var(--color-bg-muted) / <alpha-value>)',
+        },
+        border: {
+          DEFAULT: 'rgb(var(--color-border-main) / <alpha-value>)',
         },
       },
     },

@@ -1,11 +1,12 @@
 ---
-// SearchBar.astro — client-side search for dashboard
+// SearchBar.astro — client-side search for dashboard (Dante theme)
 ---
 
 <div class="relative mb-6">
   <div class="relative">
     <svg
-      class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500"
+      class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+      style="color: rgb(var(--color-text-main) / 0.4);"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -16,14 +17,16 @@
       id="search-input"
       type="text"
       placeholder="Search reports..."
-      class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161b22] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+      class="w-full pl-10 pr-4 py-2.5 rounded-lg focus:outline-none transition-all text-sm"
+      style="border: 1px solid rgb(var(--color-border-main)); background: rgb(var(--color-bg-main)); color: rgb(var(--color-text-main));"
     />
     <button
       id="search-clear"
-      class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+      class="hidden absolute right-3 top-1/2 -translate-y-1/2"
+      style="color: rgb(var(--color-text-main) / 0.4);"
       aria-label="Clear search"
     >
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
       </svg>
     </button>
@@ -47,7 +50,6 @@
         const summary = card.dataset.summary || '';
         const matches = !query || title.includes(query) || tags.includes(query) || summary.includes(query);
 
-        // Also check tag filter state
         const activeTag = document.querySelector('.tag-chip.active');
         const cardTags = card.dataset.tags || '';
         const tagMatch = !activeTag || cardTags.includes(activeTag.dataset.tag);
@@ -77,7 +79,6 @@
       });
     }
 
-    // Re-filter when tag chips are clicked
     document.addEventListener('tag-filter-changed', filter);
   })();
 </script>

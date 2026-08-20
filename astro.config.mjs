@@ -5,4 +5,8 @@ export default defineConfig({
   site: 'https://ai-research.shrutsureja.com',
   output: 'static',
   integrations: [tailwind()],
+  server: {
+    host: '0.0.0.0',
+    allowedHosts: ['dev.shrutsureja.com'],
+  },
 });

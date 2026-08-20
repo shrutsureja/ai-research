@@ -1,25 +1,21 @@
 ---
 // [slug].astro — dynamic route for MD content collection reports
 import ReportLayout from '../../layouts/ReportLayout.astro';
-import TableOfContents from '../../components/TableOfContents.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
   const reports = await getCollection('reports');
   return reports.map(report => {
-    // Strip .md extension from the id for clean URLs
     const slug = report.id.replace(/\.md$/, '');
     return {
       params: { slug },
-      props: {
-        report,
-      },
+      props: { report },
     };
   });
 }
 
 const { report } = Astro.props;
-const { Content } = await render(report);
+const { Content, headings } = await render(report);
 
 const slug = report.id.replace(/\.md$/, '');
 
@@ -28,6 +24,8 @@ const formattedDate = report.data.date.toLocaleDateString('en-US', {
   month: 'short',
   day: 'numeric',
 });
+
+const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
 ---
 
 <ReportLayout
@@ -37,6 +35,7 @@ const formattedDate = report.data.date.toLocaleDateString('en-US', {
   summary={report.data.summary}
   tags={report.data.tags}
   slug={slug}
+  headings={headings}
 >
   <!-- 1. Title -->
   <h1>{report.data.title}</h1>
@@ -63,9 +62,34 @@ const formattedDate = report.data.date.toLocaleDateString('en-US', {
     <strong>Summary:</strong> {report.data.summary}
   </div>
 
-  <!-- 3. Table of Contents -->
-  <TableOfContents />
+  <!-- 3. Mobile TOC (inline, below summary — hidden on desktop where margin TOC shows) -->
+  {tocHeadings.length > 0 && (
+    <nav class="report-toc mobile-toc" id="report-toc-mobile">
+      <div class="report-toc-title">📋 Contents</div>
+      <ul>
+        {tocHeadings.map(h => (
+          <li>
+            <a href={`#${h.slug}`} class={h.depth === 3 ? 'toc-level-2' : ''}>
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )}
 
-  <!-- Report content -->
+  <!-- 4. Report content -->
   <Content />
 </ReportLayout>
+
+<style>
+  /* Mobile TOC: visible only on small screens */
+  .mobile-toc {
+    display: block;
+  }
+  @media (min-width: 1101px) {
+    .mobile-toc {
+      display: none;
+    }
+  }
+</style>

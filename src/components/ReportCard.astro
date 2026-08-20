@@ -1,5 +1,5 @@
 ---
-// ReportCard.astro — card for dashboard report list
+// ReportCard.astro — card for dashboard report list (Dante theme)
 interface Props {
   title: string;
   summary: string;
@@ -19,20 +19,23 @@ const formattedDate = new Date(date).toLocaleDateString('en-US', {
 
 <a
   href={`/reports/${slug}`}
-  class="report-card block p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161b22] hover:border-accent dark:hover:border-accent-light transition-all hover:shadow-md group"
+  class="report-card block p-5 rounded-lg transition-all group"
+  style="border: 1px solid rgb(var(--color-border-main)); background: rgb(var(--color-bg-main));"
+  onmouseover="this.style.background='rgb(var(--color-bg-muted))'"
+  onmouseout="this.style.background='rgb(var(--color-bg-main))'"
   data-title={title.toLowerCase()}
   data-tags={tags.join(' ').toLowerCase()}
   data-summary={summary.toLowerCase()}
 >
   <div class="flex items-start justify-between gap-4 mb-2">
-    <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 group-hover:text-accent dark:group-hover:text-accent-light transition-colors leading-snug">
+    <h3 class="font-serif text-lg font-medium leading-snug" style="color: rgb(var(--color-text-main));">
       {title}
     </h3>
-    <time class="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap mt-1">
+    <time class="text-xs whitespace-nowrap mt-1" style="color: rgb(var(--color-text-main) / 0.5);">
       {formattedDate}
     </time>
   </div>
-  <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">
+  <p class="text-sm mb-3" style="color: rgb(var(--color-text-main) / 0.7);">
     {summary}
   </p>
   <div class="flex flex-wrap gap-1.5">
