@@ -1,0 +1,502 @@
+/* Report Theme — shared styling for all reports */
+/* Imported by ReportLayout.astro, applies to both HTML and MD reports */
+
+/* ─── Base Typography ─── */
+.report-body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.7;
+  font-size: 16px;
+  color: #1a1a2e;
+}
+
+.dark .report-body {
+  color: #c9d1d9;
+}
+
+.report-body h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.dark .report-body h1 {
+  color: #f0f6fc;
+}
+
+.report-body h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  letter-spacing: -0.01em;
+}
+
+.dark .report-body h2 {
+  border-bottom-color: #21262d;
+  color: #f0f6fc;
+}
+
+.report-body h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: #2d3748;
+}
+
+.dark .report-body h3 {
+  color: #d2dbe0;
+}
+
+.report-body h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+}
+
+.dark .report-body h4 {
+  color: #adbac7;
+}
+
+.report-body p {
+  margin-bottom: 1.25rem;
+}
+
+.report-body a {
+  color: #6366f1;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.report-body a:hover {
+  border-bottom-color: #6366f1;
+}
+
+.dark .report-body a {
+  color: #818cf8;
+}
+
+.dark .report-body a:hover {
+  border-bottom-color: #818cf8;
+}
+
+.report-body strong {
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.dark .report-body strong {
+  color: #f0f6fc;
+}
+
+.report-body ul,
+.report-body ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.report-body ul {
+  list-style: disc;
+}
+
+.report-body ol {
+  list-style: decimal;
+}
+
+.report-body li {
+  margin-bottom: 0.5rem;
+}
+
+.report-body li::marker {
+  color: #6366f1;
+}
+
+.dark .report-body li::marker {
+  color: #818cf8;
+}
+
+/* ─── Code Blocks ─── */
+.report-body code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.875rem;
+}
+
+.report-body :not(pre) > code {
+  background: #f1f5f9;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.3rem;
+  font-weight: 500;
+  color: #db2777;
+}
+
+.dark .report-body :not(pre) > code {
+  background: #1e2530;
+  color: #f472b6;
+}
+
+.report-body pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  border: 1px solid #1e293b;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.dark .report-body pre {
+  background: #0d1117;
+  border-color: #21262d;
+}
+
+.report-body pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-weight: 400;
+}
+
+/* ─── Tables ─── */
+.report-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+}
+
+.report-body th {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid #e2e8f0;
+  color: #1a1a2e;
+  background: #f8fafc;
+}
+
+.dark .report-body th {
+  border-bottom-color: #30363d;
+  color: #f0f6fc;
+  background: #161b22;
+}
+
+.report-body td {
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  color: #4a5568;
+}
+
+.dark .report-body td {
+  border-bottom-color: #21262d;
+  color: #adbac7;
+}
+
+.report-body tr:hover td {
+  background: #f8fafc;
+}
+
+.dark .report-body tr:hover td {
+  background: #161b22;
+}
+
+/* ─── Blockquotes ─── */
+.report-body blockquote {
+  border-left: 4px solid #6366f1;
+  padding: 0.5rem 0 0.5rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+  color: #64748b;
+}
+
+.dark .report-body blockquote {
+  border-left-color: #818cf8;
+  color: #8b949e;
+}
+
+/* ─── Callouts (note, warning, tip) ─── */
+.report-body .callout {
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid;
+  font-size: 0.9375rem;
+}
+
+.report-body .callout-title {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.report-body .callout-note {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.report-body .callout-note .callout-title {
+  color: #1d4ed8;
+}
+
+.dark .report-body .callout-note {
+  background: #0d1526;
+  border-color: #3b82f6;
+}
+
+.dark .report-body .callout-note .callout-title {
+  color: #60a5fa;
+}
+
+.report-body .callout-warning {
+  background: #fffbeb;
+  border-color: #f59e0b;
+}
+
+.report-body .callout-warning .callout-title {
+  color: #b45309;
+}
+
+.dark .report-body .callout-warning {
+  background: #1a1505;
+  border-color: #f59e0b;
+}
+
+.dark .report-body .callout-warning .callout-title {
+  color: #fbbf24;
+}
+
+.report-body .callout-tip {
+  background: #ecfdf5;
+  border-color: #10b981;
+}
+
+.report-body .callout-tip .callout-title {
+  color: #047857;
+}
+
+.dark .report-body .callout-tip {
+  background: #051912;
+  border-color: #10b981;
+}
+
+.dark .report-body .callout-tip .callout-title {
+  color: #34d399;
+}
+
+/* ─── SVG Diagram Containers ─── */
+.report-body .diagram {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.report-body .diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.report-body .diagram-caption {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.dark .report-body .diagram-caption {
+  color: #8b949e;
+}
+
+/* ─── Horizontal Rule ─── */
+.report-body hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 2.5rem 0;
+}
+
+.dark .report-body hr {
+  border-top-color: #21262d;
+}
+
+/* ─── Report Metadata Block ─── */
+.report-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+  font-size: 0.875rem;
+}
+
+.dark .report-meta {
+  background: #161b22;
+  border-color: #21262d;
+}
+
+.report-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.report-meta-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.report-meta-value {
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.dark .report-meta-value {
+  color: #d2dbe0;
+}
+
+/* ─── Report Summary Block ─── */
+.report-summary {
+  padding: 1rem 1.25rem;
+  background: #f0f4ff;
+  border-radius: 0.5rem;
+  border: 1px solid #c7d2fe;
+  margin-bottom: 2rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.dark .report-summary {
+  background: #0d1326;
+  border-color: #312e81;
+}
+
+/* ─── TOC ─── */
+.report-toc {
+  padding: 1.25rem 1.5rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 2.5rem;
+}
+
+.dark .report-toc {
+  background: #161b22;
+  border-color: #21262d;
+}
+
+.report-toc-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
+.dark .report-toc-title {
+  color: #8b949e;
+}
+
+.report-toc ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.report-toc li {
+  margin-bottom: 0.35rem;
+}
+
+.report-toc a {
+  font-size: 0.875rem;
+  color: #4a5568;
+  border-bottom: none;
+  transition: color 0.15s ease;
+}
+
+.report-toc a:hover {
+  color: #6366f1;
+  border-bottom: none;
+}
+
+.dark .report-toc a {
+  color: #adbac7;
+}
+
+.dark .report-toc a:hover {
+  color: #818cf8;
+}
+
+.report-toc .toc-level-2 {
+  padding-left: 1.25rem;
+  font-size: 0.8125rem;
+}
+
+/* ─── Tags ─── */
+.report-tag {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #eef2ff;
+  color: #4338ca;
+  text-decoration: none;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.report-tag:hover {
+  background: #6366f1;
+  color: #fff;
+  border-bottom: none;
+}
+
+.dark .report-tag {
+  background: #1e1b4b;
+  color: #a5b4fc;
+}
+
+.dark .report-tag:hover {
+  background: #6366f1;
+  color: #fff;
+}
+
+/* ─── Back Link ─── */
+.report-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  text-decoration: none;
+  border-bottom: none;
+  margin-bottom: 1.5rem;
+  transition: color 0.15s ease;
+}
+
+.report-back:hover {
+  color: #6366f1;
+  border-bottom: none;
+}
+
+.dark .report-back {
+  color: #8b949e;
+}
+
+.dark .report-back:hover {
+  color: #818cf8;
+}

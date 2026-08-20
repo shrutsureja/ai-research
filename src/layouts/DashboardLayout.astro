@@ -1,0 +1,32 @@
+---
+// DashboardLayout.astro — dashboard wrapper layout
+import '../styles/report-theme.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = 'AI Research — Reports', description = 'Research reports and deep dives' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <script is:inline>
+      // Prevent FOUC — set theme before paint
+      const theme = localStorage.getItem('theme');
+      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0d1117] dark:text-slate-200 transition-colors">
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,122 @@
+---
+// index.astro — dashboard: list all reports with search + tags
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import ReportCard from '../components/ReportCard.astro';
+import SearchBar from '../components/SearchBar.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import { getCollection } from 'astro:content';
+
+// Fetch all reports from content collection
+const reports = await getCollection('reports');
+
+// Sort by date descending
+reports.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+// Gather all unique tags
+const allTags = [...new Set(reports.flatMap(r => r.data.tags))].sort();
+---
+
+<DashboardLayout title="AI Research — Deep Dive Reports">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <!-- Header -->
+    <header class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+            AI Research
+          </h1>
+          <p class="mt-1 text-slate-500 dark:text-slate-400">
+            Deep dive reports and technical analyses
+          </p>
+        </div>
+        <ThemeToggle />
+      </div>
+      <div class="h-1 w-20 bg-gradient-to-r from-accent to-accent-light rounded-full"></div>
+    </header>
+
+    <!-- Search -->
+    <SearchBar />
+
+    <!-- Tag Filters -->
+    <div class="flex flex-wrap gap-2 mb-6" id="tag-filters">
+      <button
+        class="tag-chip active px-3 py-1.5 rounded-full text-sm font-medium border transition-all"
+        data-tag=""
+      >
+        All
+      </button>
+      {allTags.map(tag => (
+        <button
+          class="tag-chip px-3 py-1.5 rounded-full text-sm font-medium border transition-all"
+          data-tag={tag}
+        >
+          {tag}
+        </button>
+      ))}
+    </div>
+
+    <!-- Report Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="report-grid">
+      {reports.map(report => (
+        <ReportCard
+          title={report.data.title}
+          summary={report.data.summary}
+          date={report.data.date.toISOString()}
+          tags={report.data.tags}
+                    slug={report.id.replace(/\.md$/, '')}
+        />
+      ))}
+    </div>
+
+    <!-- No Results -->
+    <div id="no-results" class="hidden text-center py-16 text-slate-400 dark:text-slate-500">
+      <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p class="text-lg font-medium">No reports found</p>
+      <p class="text-sm mt-1">Try a different search or tag</p>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-16 pt-6 border-t border-slate-200 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 text-center">
+      <p>{reports.length} report{reports.length !== 1 ? 's' : ''} · Powered by Astro + Cloudflare Pages</p>
+    </footer>
+  </div>
+
+  <script is:inline>
+    (function() {
+      const chips = document.querySelectorAll('.tag-chip');
+
+      chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          // Toggle active state
+          chips.forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+
+          // Dispatch event for search bar to pick up
+          document.dispatchEvent(new CustomEvent('tag-filter-changed'));
+
+          // Update styles
+          chips.forEach(c => {
+            c.classList.remove('bg-accent', 'text-white', 'border-accent');
+            c.classList.add('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-300');
+          });
+          chip.classList.add('bg-accent', 'text-white', 'border-accent');
+          chip.classList.remove('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-300');
+        });
+      });
+
+      // Initialize active chip styling
+      const activeChip = document.querySelector('.tag-chip.active');
+      if (activeChip) {
+        activeChip.classList.add('bg-accent', 'text-white', 'border-accent');
+        activeChip.classList.remove('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-300');
+      }
+      chips.forEach(c => {
+        if (!c.classList.contains('active')) {
+          c.classList.add('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-300');
+        }
+      });
+    })();
+  </script>
+</DashboardLayout>

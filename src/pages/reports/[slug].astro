@@ -1,0 +1,71 @@
+---
+// [slug].astro — dynamic route for MD content collection reports
+import ReportLayout from '../../layouts/ReportLayout.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const reports = await getCollection('reports');
+  return reports.map(report => {
+    // Strip .md extension from the id for clean URLs
+    const slug = report.id.replace(/\.md$/, '');
+    return {
+      params: { slug },
+      props: {
+        report,
+      },
+    };
+  });
+}
+
+const { report } = Astro.props;
+const { Content } = await render(report);
+
+const slug = report.id.replace(/\.md$/, '');
+
+const formattedDate = report.data.date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+---
+
+<ReportLayout
+  title={report.data.title}
+  version={report.data.version}
+  date={report.data.date.toISOString()}
+  summary={report.data.summary}
+  tags={report.data.tags}
+  slug={slug}
+>
+  <!-- 1. Title -->
+  <h1>{report.data.title}</h1>
+
+  <!-- 2. Version & Summary metadata block -->
+  <div class="report-meta">
+    <div class="report-meta-item">
+      <span class="report-meta-label">Version</span>
+      <span class="report-meta-value">{report.data.version}</span>
+    </div>
+    <div class="report-meta-item">
+      <span class="report-meta-label">Date</span>
+      <span class="report-meta-value">{formattedDate}</span>
+    </div>
+    <div class="report-meta-item">
+      <span class="report-meta-label">Tags</span>
+      <div class="flex flex-wrap gap-1.5 mt-1">
+        {report.data.tags.map(tag => <span class="report-tag">{tag}</span>)}
+      </div>
+    </div>
+  </div>
+
+  <div class="report-summary">
+    <strong>Summary:</strong> {report.data.summary}
+  </div>
+
+  <!-- 3. Table of Contents -->
+  <TableOfContents />
+
+  <!-- Report content -->
+  <Content />
+</ReportLayout>
