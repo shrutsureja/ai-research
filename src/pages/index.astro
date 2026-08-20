@@ -1,19 +1,40 @@
 ---
-// index.astro — dashboard: list all reports with search + tags (Dante theme)
+// index.astro — dashboard: list all reports (MD + HTML) with search + tags (Dante theme)
 import DashboardLayout from '../layouts/DashboardLayout.astro';
 import ReportCard from '../components/ReportCard.astro';
 import SearchBar from '../components/SearchBar.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import { getCollection } from 'astro:content';
+import htmlReports from '../data/html-reports';
 
-// Fetch all reports from content collection
-const reports = await getCollection('reports');
+// Fetch MD reports from content collection
+const mdReports = await getCollection('reports');
+
+// Combine into a unified format
+const allReports = [
+  ...mdReports.map(r => ({
+    slug: r.id.replace(/\.md$/, ''),
+    title: r.data.title,
+    summary: r.data.summary,
+    date: r.data.date.toISOString(),
+    tags: r.data.tags,
+    type: 'md' as const,
+  })),
+  ...htmlReports.map(r => ({
+    slug: r.slug,
+    title: r.title,
+    summary: r.summary,
+    date: r.date,
+    tags: r.tags,
+    type: 'html' as const,
+  })),
+];
 
 // Sort by date descending
-reports.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+allReports.sort((a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf());
 
 // Gather all unique tags
-const allTags = [...new Set(reports.flatMap(r => r.data.tags))].sort();
+const allTags = [...new Set(allReports.flatMap(r => r.tags))].sort();
 ---
 
 <DashboardLayout title="AI Research — Deep Dive Reports">
@@ -64,13 +85,13 @@ const allTags = [...new Set(reports.flatMap(r => r.data.tags))].sort();
 
       <!-- Report List -->
       <div class="grid grid-cols-1 gap-4 mb-8" id="report-grid">
-        {reports.map(report => (
+        {allReports.map(report => (
           <ReportCard
-            title={report.data.title}
-            summary={report.data.summary}
-            date={report.data.date.toISOString()}
-            tags={report.data.tags}
-            slug={report.id.replace(/\.md$/, '')}
+            title={report.title}
+            summary={report.summary}
+            date={report.date}
+            tags={report.tags}
+            slug={report.slug}
           />
         ))}
       </div>
@@ -86,7 +107,7 @@ const allTags = [...new Set(reports.flatMap(r => r.data.tags))].sort();
     <footer class="w-full max-w-3xl mx-auto pt-8 pb-10">
       <div class="pt-6 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center" style="border-top: 1px solid rgb(var(--color-border-main));">
         <p class="text-sm" style="color: rgb(var(--color-text-main) / 0.6);">
-          {reports.length} report{reports.length !== 1 ? 's' : ''}
+          {allReports.length} report{allReports.length !== 1 ? 's' : ''}
         </p>
         <p class="text-sm" style="color: rgb(var(--color-text-main) / 0.6);">
           Powered by Astro + Cloudflare Pages
@@ -117,7 +138,6 @@ const allTags = [...new Set(reports.flatMap(r => r.data.tags))].sort();
         });
       });
 
-      // Initialize active chip
       const activeChip = document.querySelector('.tag-chip.active');
       if (activeChip) setActiveChip(activeChip);
     })();

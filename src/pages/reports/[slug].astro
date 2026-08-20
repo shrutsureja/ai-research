@@ -1,50 +1,91 @@
 ---
-// [slug].astro — dynamic route for MD content collection reports
+// [slug].astro — dynamic route for both MD and HTML reports
 import ReportLayout from '../../layouts/ReportLayout.astro';
 import { getCollection, render } from 'astro:content';
+import htmlReports from '../../data/html-reports';
 
 export async function getStaticPaths() {
-  const reports = await getCollection('reports');
-  return reports.map(report => {
+  // MD reports from content collection
+  const mdReports = await getCollection('reports');
+
+  // Combine MD slugs and HTML slugs
+  const mdPaths = mdReports.map(report => {
     const slug = report.id.replace(/\.md$/, '');
     return {
       params: { slug },
-      props: { report },
+      props: { type: 'md', report },
     };
   });
+
+  // HTML reports from the data file
+  const htmlPaths = htmlReports.map(report => ({
+    params: { slug: report.slug },
+    props: { type: 'html', report },
+  }));
+
+  return [...mdPaths, ...htmlPaths];
 }
 
-const { report } = Astro.props;
-const { Content, headings } = await render(report);
+const { type, report } = Astro.props;
 
-const slug = report.id.replace(/\.md$/, '');
+let headings: any[] = [];
+let title = '';
+let version = '';
+let date = '';
+let summary = '';
+let tags: string[] = [];
+let slug = '';
+let Content: any = null;
+let htmlContent = '';
 
-const formattedDate = report.data.date.toLocaleDateString('en-US', {
+if (type === 'md') {
+  const rendered = await render(report);
+  Content = rendered.Content;
+  headings = rendered.headings;
+  title = report.data.title;
+  version = report.data.version;
+  date = report.data.date.toISOString();
+  summary = report.data.summary;
+  tags = report.data.tags;
+  slug = report.id.replace(/\.md$/, '');
+} else {
+  // HTML report
+  title = report.title;
+  version = report.version || '1.0.0';
+  date = report.date;
+  summary = report.summary;
+  tags = report.tags || [];
+  slug = report.slug;
+  headings = report.headings || [];
+  htmlContent = report.html;
+}
+
+const formattedDate = new Date(date).toLocaleDateString('en-US', {
   year: 'numeric',
   month: 'short',
   day: 'numeric',
 });
 
-const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
+const tocHeadings = headings.filter((h: any) => h.depth === 2 || h.depth === 3);
 ---
 
 <ReportLayout
-  title={report.data.title}
-  version={report.data.version}
-  date={report.data.date.toISOString()}
-  summary={report.data.summary}
-  tags={report.data.tags}
+  title={title}
+  version={version}
+  date={date}
+  summary={summary}
+  tags={tags}
   slug={slug}
   headings={headings}
 >
   <!-- 1. Title -->
-  <h1>{report.data.title}</h1>
+  <h1>{title}</h1>
 
   <!-- 2. Version & Summary metadata block -->
   <div class="report-meta">
     <div class="report-meta-item">
       <span class="report-meta-label">Version</span>
-      <span class="report-meta-value">{report.data.version}</span>
+      <span class="report-meta-value">{version}</span>
     </div>
     <div class="report-meta-item">
       <span class="report-meta-label">Date</span>
@@ -53,21 +94,21 @@ const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
     <div class="report-meta-item">
       <span class="report-meta-label">Tags</span>
       <div class="flex flex-wrap gap-1.5 mt-1">
-        {report.data.tags.map(tag => <span class="report-tag">{tag}</span>)}
+        {tags.map(tag => <span class="report-tag">{tag}</span>)}
       </div>
     </div>
   </div>
 
   <div class="report-summary">
-    <strong>Summary:</strong> {report.data.summary}
+    <strong>Summary:</strong> {summary}
   </div>
 
-  <!-- 3. Mobile TOC (inline, below summary — hidden on desktop where margin TOC shows) -->
+  <!-- 3. Mobile TOC (inline, below summary) -->
   {tocHeadings.length > 0 && (
     <nav class="report-toc mobile-toc" id="report-toc-mobile">
       <div class="report-toc-title">📋 Contents</div>
       <ul>
-        {tocHeadings.map(h => (
+        {tocHeadings.map((h: any) => (
           <li>
             <a href={`#${h.slug}`} class={h.depth === 3 ? 'toc-level-2' : ''}>
               {h.text}
@@ -79,17 +120,12 @@ const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
   )}
 
   <!-- 4. Report content -->
-  <Content />
+  {type === 'md' ? <Content /> : <Fragment set:html={htmlContent} />}
 </ReportLayout>
 
 <style>
-  /* Mobile TOC: visible only on small screens */
-  .mobile-toc {
-    display: block;
-  }
+  .mobile-toc { display: block; }
   @media (min-width: 1101px) {
-    .mobile-toc {
-      display: none;
-    }
+    .mobile-toc { display: none; }
   }
 </style>
