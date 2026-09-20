@@ -63,6 +63,7 @@
     let currentUtterance = null;
     let state = 'idle';
     let activeElement = null;
+    let retriedWithDefaultVoice = false;
 
     const savedRate = localStorage.getItem('report-narration-rate');
     if (savedRate && rate.querySelector(`option[value="${savedRate}"]`)) rate.value = savedRate;
@@ -135,6 +136,23 @@
       if (selected && voice.querySelector(`option[value="${CSS.escape(selected)}"]`)) voice.value = selected;
     }
 
+    function waitForVoices(timeout = 2000) {
+      if (synth.getVoices().length > 0) return Promise.resolve();
+
+      return new Promise((resolve) => {
+        let settled = false;
+        const finishWaiting = () => {
+          if (settled) return;
+          settled = true;
+          synth.removeEventListener('voiceschanged', finishWaiting);
+          resolve();
+        };
+
+        synth.addEventListener('voiceschanged', finishWaiting);
+        window.setTimeout(finishWaiting, timeout);
+      });
+    }
+
     function setState(next) {
       state = next;
       const isPlaying = state === 'playing';
@@ -177,7 +195,14 @@
       currentUtterance = utterance;
       utterance.rate = Number(rate.value);
 
-      const selectedVoice = synth.getVoices().find((item) => item.voiceURI === voice.value);
+      const availableVoices = synth.getVoices();
+      const selectedVoice = retriedWithDefaultVoice
+        ? null
+        : availableVoices.find((item) => item.voiceURI === voice.value)
+          || availableVoices.find((item) => item.localService && /^en([-_]|$)/i.test(item.lang))
+          || availableVoices.find((item) => /^en([-_]|$)/i.test(item.lang))
+          || availableVoices.find((item) => item.localService)
+          || availableVoices[0];
       if (selectedVoice) utterance.voice = selectedVoice;
 
       utterance.onstart = () => {
@@ -193,15 +218,48 @@
 
       utterance.onerror = (event) => {
         if (event.error === 'canceled' || event.error === 'interrupted') return;
-        segmentIndex += 1;
-        speakCurrent();
+
+        console.error('Report narration failed:', event.error, event);
+
+        if (!retriedWithDefaultVoice && utterance.voice) {
+          retriedWithDefaultVoice = true;
+          voice.value = '';
+          localStorage.removeItem('report-narration-voice');
+          synth.cancel();
+          window.setTimeout(speakCurrent, 150);
+          return;
+        }
+
+        const errorMessages = {
+          'not-allowed': 'Voice blocked — open this page in Chrome/Safari and tap Listen again',
+          'audio-busy': 'Audio is busy — stop other audio and try again',
+          'audio-hardware': 'No audio output is available on this device',
+          'network': 'The selected online voice could not connect',
+          'synthesis-failed': 'This browser voice failed — choose another voice or open in Chrome',
+          'synthesis-unavailable': 'Speech synthesis is unavailable in this browser',
+          'voice-unavailable': 'That voice is unavailable — choose another voice',
+          'text-too-long': 'A section was too long for this voice engine',
+          'language-unavailable': 'No English speech voice is installed on this device',
+        };
+
+        synth.cancel();
+        currentUtterance = null;
+        clearHighlight();
+        setState('idle');
+        progress.textContent = errorMessages[event.error] || `Voice error: ${event.error || 'unknown'}`;
       };
 
       synth.speak(utterance);
     }
 
-    function start() {
+    async function start() {
       synth.cancel();
+      retriedWithDefaultVoice = false;
+      toggle.disabled = true;
+      progress.textContent = 'Loading voices…';
+      await waitForVoices();
+      populateVoices();
+      toggle.disabled = false;
       segments = collectSegments();
       segmentIndex = 0;
 
@@ -211,7 +269,8 @@
       }
 
       setState('playing');
-      speakCurrent();
+      progress.textContent = 'Starting…';
+      window.setTimeout(speakCurrent, 150);
     }
 
     toggle.addEventListener('click', () => {
