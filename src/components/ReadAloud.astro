@@ -1,0 +1,393 @@
+---
+// Client-side report narration using the browser's Web Speech API.
+// No API key, server, or generated audio files are required.
+---
+
+<section class="read-aloud" id="read-aloud" aria-label="Listen to this report">
+  <button class="read-aloud-primary" id="read-aloud-toggle" type="button" aria-pressed="false">
+    <span id="read-aloud-icon" aria-hidden="true">▶</span>
+    <span id="read-aloud-label">Listen</span>
+  </button>
+
+  <button class="read-aloud-stop" id="read-aloud-stop" type="button" disabled>
+    <span aria-hidden="true">■</span>
+    <span class="sr-only">Stop narration</span>
+  </button>
+
+  <label class="read-aloud-field">
+    <span>Speed</span>
+    <select id="read-aloud-rate" aria-label="Narration speed">
+      <option value="0.8">0.8×</option>
+      <option value="1" selected>1×</option>
+      <option value="1.2">1.2×</option>
+      <option value="1.5">1.5×</option>
+      <option value="1.8">1.8×</option>
+      <option value="2">2×</option>
+    </select>
+  </label>
+
+  <label class="read-aloud-field read-aloud-voice-field">
+    <span>Voice</span>
+    <select id="read-aloud-voice" aria-label="Narration voice">
+      <option value="">System default</option>
+    </select>
+  </label>
+
+  <span class="read-aloud-progress" id="read-aloud-progress" aria-live="polite">Ready</span>
+</section>
+
+<script is:inline>
+  (() => {
+    const root = document.getElementById('read-aloud');
+    const toggle = document.getElementById('read-aloud-toggle');
+    const stop = document.getElementById('read-aloud-stop');
+    const icon = document.getElementById('read-aloud-icon');
+    const label = document.getElementById('read-aloud-label');
+    const rate = document.getElementById('read-aloud-rate');
+    const voice = document.getElementById('read-aloud-voice');
+    const progress = document.getElementById('read-aloud-progress');
+
+    if (!root || !toggle || !stop || !icon || !label || !rate || !voice || !progress) return;
+
+    if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+      root.classList.add('read-aloud-unsupported');
+      toggle.disabled = true;
+      label.textContent = 'Voice unavailable';
+      progress.textContent = 'This browser does not support read-aloud';
+      return;
+    }
+
+    const synth = window.speechSynthesis;
+    let segments = [];
+    let segmentIndex = 0;
+    let currentUtterance = null;
+    let state = 'idle';
+    let activeElement = null;
+
+    const savedRate = localStorage.getItem('report-narration-rate');
+    if (savedRate && rate.querySelector(`option[value="${savedRate}"]`)) rate.value = savedRate;
+
+    function splitText(text, maxLength = 260) {
+      const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+      const chunks = [];
+      let chunk = '';
+
+      sentences.forEach((sentence) => {
+        const clean = sentence.trim();
+        if (!clean) return;
+        if (chunk && `${chunk} ${clean}`.length > maxLength) {
+          chunks.push(chunk);
+          chunk = clean;
+        } else {
+          chunk = chunk ? `${chunk} ${clean}` : clean;
+        }
+      });
+
+      if (chunk) chunks.push(chunk);
+      return chunks;
+    }
+
+    function collectSegments() {
+      const article = document.querySelector('.report-body');
+      if (!article) return [];
+
+      const nodes = article.querySelectorAll('h1, h2, h3, h4, p, li, tr, figcaption, .diagram-caption');
+      const result = [];
+
+      nodes.forEach((element) => {
+        if (
+          element.closest('.report-meta, .report-toc, pre, script, style') ||
+          (element.matches('p') && element.closest('li')) ||
+          (element.matches('.diagram-caption') && element.matches('figcaption'))
+        ) return;
+
+        let text = element.innerText.replace(/\s+/g, ' ').trim();
+        if (!text || text.length < 2) return;
+
+        if (element.matches('tr')) {
+          text = Array.from(element.querySelectorAll('th, td'))
+            .map((cell) => cell.innerText.replace(/\s+/g, ' ').trim())
+            .filter(Boolean)
+            .join('. ');
+        }
+
+        splitText(text).forEach((part) => result.push({ text: part, element }));
+      });
+
+      return result;
+    }
+
+    function populateVoices() {
+      const voices = synth.getVoices();
+      const selected = localStorage.getItem('report-narration-voice') || voice.value;
+      voice.innerHTML = '<option value="">System default</option>';
+
+      voices
+        .slice()
+        .sort((a, b) => a.lang.localeCompare(b.lang) || a.name.localeCompare(b.name))
+        .forEach((item) => {
+          const option = document.createElement('option');
+          option.value = item.voiceURI;
+          option.textContent = `${item.name} (${item.lang})${item.localService ? '' : ' · online'}`;
+          voice.appendChild(option);
+        });
+
+      if (selected && voice.querySelector(`option[value="${CSS.escape(selected)}"]`)) voice.value = selected;
+    }
+
+    function setState(next) {
+      state = next;
+      const isPlaying = state === 'playing';
+      const isPaused = state === 'paused';
+      toggle.setAttribute('aria-pressed', String(isPlaying || isPaused));
+      stop.disabled = state === 'idle';
+      icon.textContent = isPlaying ? 'Ⅱ' : '▶';
+      label.textContent = isPlaying ? 'Pause' : isPaused ? 'Resume' : 'Listen';
+    }
+
+    function clearHighlight() {
+      if (activeElement) activeElement.classList.remove('read-aloud-active');
+      activeElement = null;
+    }
+
+    function highlight(element) {
+      clearHighlight();
+      activeElement = element;
+      activeElement.classList.add('read-aloud-active');
+      activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function finish() {
+      synth.cancel();
+      currentUtterance = null;
+      segmentIndex = 0;
+      clearHighlight();
+      setState('idle');
+      progress.textContent = 'Finished';
+    }
+
+    function speakCurrent() {
+      if (segmentIndex >= segments.length) {
+        finish();
+        return;
+      }
+
+      const segment = segments[segmentIndex];
+      const utterance = new SpeechSynthesisUtterance(segment.text);
+      currentUtterance = utterance;
+      utterance.rate = Number(rate.value);
+
+      const selectedVoice = synth.getVoices().find((item) => item.voiceURI === voice.value);
+      if (selectedVoice) utterance.voice = selectedVoice;
+
+      utterance.onstart = () => {
+        highlight(segment.element);
+        progress.textContent = `${segmentIndex + 1} / ${segments.length}`;
+      };
+
+      utterance.onend = () => {
+        if (state !== 'playing' || currentUtterance !== utterance) return;
+        segmentIndex += 1;
+        speakCurrent();
+      };
+
+      utterance.onerror = (event) => {
+        if (event.error === 'canceled' || event.error === 'interrupted') return;
+        segmentIndex += 1;
+        speakCurrent();
+      };
+
+      synth.speak(utterance);
+    }
+
+    function start() {
+      synth.cancel();
+      segments = collectSegments();
+      segmentIndex = 0;
+
+      if (!segments.length) {
+        progress.textContent = 'No readable text found';
+        return;
+      }
+
+      setState('playing');
+      speakCurrent();
+    }
+
+    toggle.addEventListener('click', () => {
+      if (state === 'idle') {
+        start();
+      } else if (state === 'playing') {
+        synth.pause();
+        setState('paused');
+        progress.textContent = `Paused · ${segmentIndex + 1} / ${segments.length}`;
+      } else {
+        synth.resume();
+        setState('playing');
+        progress.textContent = `${segmentIndex + 1} / ${segments.length}`;
+      }
+    });
+
+    stop.addEventListener('click', () => {
+      synth.cancel();
+      currentUtterance = null;
+      segmentIndex = 0;
+      clearHighlight();
+      setState('idle');
+      progress.textContent = 'Stopped';
+    });
+
+    rate.addEventListener('change', () => {
+      localStorage.setItem('report-narration-rate', rate.value);
+      if (state === 'playing' || state === 'paused') {
+        const wasPaused = state === 'paused';
+        synth.cancel();
+        setState('playing');
+        speakCurrent();
+        if (wasPaused) {
+          window.setTimeout(() => {
+            synth.pause();
+            setState('paused');
+          }, 50);
+        }
+      }
+    });
+
+    voice.addEventListener('change', () => {
+      localStorage.setItem('report-narration-voice', voice.value);
+    });
+
+    populateVoices();
+    if ('onvoiceschanged' in synth) synth.addEventListener('voiceschanged', populateVoices);
+    window.addEventListener('beforeunload', () => synth.cancel());
+  })();
+</script>
+
+<style>
+  .read-aloud {
+    position: fixed;
+    z-index: 50;
+    left: 50%;
+    bottom: 1rem;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: min(calc(100vw - 2rem), 52rem);
+    padding: 0.65rem;
+    border: 1px solid rgb(var(--color-border-main));
+    border-radius: 0.75rem;
+    background: rgb(var(--color-bg-main) / 0.96);
+    color: rgb(var(--color-text-main));
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.14);
+    backdrop-filter: blur(12px);
+  }
+
+  .read-aloud button,
+  .read-aloud select {
+    border: 1px solid rgb(var(--color-border-main) / 0.35);
+    border-radius: 0.45rem;
+    background: rgb(var(--color-bg-muted));
+    color: rgb(var(--color-text-main));
+    font: inherit;
+  }
+
+  .read-aloud button {
+    min-height: 2.35rem;
+    padding: 0.45rem 0.7rem;
+    cursor: pointer;
+  }
+
+  .read-aloud button:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+  }
+
+  .read-aloud-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 6rem;
+    font-weight: 700 !important;
+    background: rgb(var(--color-text-main)) !important;
+    color: rgb(var(--color-bg-main)) !important;
+    border-color: rgb(var(--color-text-main)) !important;
+  }
+
+  .read-aloud-stop {
+    width: 2.35rem;
+    padding-inline: 0 !important;
+  }
+
+  .read-aloud-field {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: rgb(var(--color-text-main) / 0.65);
+  }
+
+  .read-aloud select {
+    min-height: 2.35rem;
+    padding: 0.35rem 1.75rem 0.35rem 0.5rem;
+    max-width: 14rem;
+  }
+
+  .read-aloud-progress {
+    margin-left: auto;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    color: rgb(var(--color-text-main) / 0.6);
+  }
+
+  .read-aloud-unsupported .read-aloud-stop,
+  .read-aloud-unsupported .read-aloud-field {
+    display: none;
+  }
+
+  :global(.report-body .read-aloud-active) {
+    background: rgb(var(--color-bg-muted));
+    outline: 3px solid rgb(var(--color-text-main) / 0.12);
+    outline-offset: 0.3rem;
+    border-radius: 0.2rem;
+  }
+
+  :global(.report-main) {
+    padding-bottom: 7rem !important;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 720px) {
+    .read-aloud {
+      flex-wrap: wrap;
+      bottom: 0.5rem;
+      width: calc(100vw - 1rem);
+    }
+
+    .read-aloud-voice-field {
+      order: 5;
+      width: 100%;
+    }
+
+    .read-aloud-voice-field select {
+      flex: 1;
+      max-width: none;
+    }
+
+    .read-aloud-progress {
+      flex: 1;
+      text-align: right;
+    }
+  }
+</style>
