@@ -3,15 +3,18 @@
 // Web Speech API remains the zero-cost fallback for other reports.
 interface Props {
   audioSrc?: string;
+  audioOpusSrc?: string;
 }
 
-const { audioSrc } = Astro.props;
+const { audioSrc, audioOpusSrc } = Astro.props;
 ---
 
 {audioSrc ? (
   <section class="read-aloud read-aloud-recorded" aria-label="Listen to this report">
     <span class="read-aloud-recorded-label">🎧 Listen</span>
-    <audio controls preload="metadata" src={audioSrc}>
+    <audio controls preload="metadata" playsinline>
+      {audioOpusSrc && <source src={audioOpusSrc} type='audio/webm; codecs="opus"' />}
+      <source src={audioSrc} type="audio/mpeg" />
       Your browser does not support audio playback.
     </audio>
     <label class="read-aloud-field">
@@ -25,7 +28,8 @@ const { audioSrc } = Astro.props;
         <option value="2">2×</option>
       </select>
     </label>
-    <span class="read-aloud-progress">Recorded voice</span>
+    <span class="read-aloud-progress" id="recorded-audio-status" aria-live="polite">Loading audio…</span>
+    <a class="read-aloud-audio-link" href={audioSrc} target="_blank" rel="noopener">Open audio</a>
   </section>
 ) : (
 
@@ -68,7 +72,8 @@ const { audioSrc } = Astro.props;
     (() => {
       const audio = document.querySelector('.read-aloud-recorded audio');
       const rate = document.getElementById('recorded-audio-rate');
-      if (!(audio instanceof HTMLAudioElement) || !(rate instanceof HTMLSelectElement)) return;
+      const status = document.getElementById('recorded-audio-status');
+      if (!(audio instanceof HTMLAudioElement) || !(rate instanceof HTMLSelectElement) || !status) return;
 
       const savedRate = localStorage.getItem('report-audio-rate');
       if (savedRate && rate.querySelector(`option[value="${savedRate}"]`)) rate.value = savedRate;
@@ -78,6 +83,22 @@ const { audioSrc } = Astro.props;
         audio.playbackRate = Number(rate.value);
         localStorage.setItem('report-audio-rate', rate.value);
       });
+
+      const showReady = () => { status.textContent = 'Ready'; };
+      audio.addEventListener('loadedmetadata', showReady);
+      audio.addEventListener('canplay', showReady);
+      audio.addEventListener('playing', () => { status.textContent = 'Playing'; });
+      audio.addEventListener('pause', () => {
+        if (!audio.ended && audio.currentTime > 0) status.textContent = 'Paused';
+      });
+      audio.addEventListener('ended', () => { status.textContent = 'Finished'; });
+      audio.addEventListener('waiting', () => { status.textContent = 'Buffering…'; });
+      audio.addEventListener('error', () => {
+        status.textContent = 'Playback failed — tap Open audio';
+      });
+
+      if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) showReady();
+      else audio.load();
     })();
   </script>
 )}
@@ -427,6 +448,14 @@ const { audioSrc } = Astro.props;
   .read-aloud-recorded-label {
     white-space: nowrap;
     font-weight: 700;
+  }
+
+  .read-aloud-audio-link {
+    white-space: nowrap;
+    font-size: 0.75rem;
+    color: rgb(var(--color-text-main) / 0.7);
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .read-aloud-recorded audio {

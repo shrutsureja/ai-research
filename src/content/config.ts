@@ -9,6 +9,7 @@ const reports = defineCollection({
     date: z.coerce.date(),
     tags: z.array(z.string()).default([]),
     audio: z.string().optional(),
+    audioOpus: z.string().optional(),
   }),
 });
 

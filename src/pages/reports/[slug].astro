@@ -36,6 +36,7 @@ let summary = '';
 let tags: string[] = [];
 let slug = '';
 let audio = '';
+let audioOpus = '';
 let Content: any = null;
 let htmlContent = '';
 
@@ -49,6 +50,7 @@ if (type === 'md') {
   summary = report.data.summary;
   tags = report.data.tags;
   audio = report.data.audio || '';
+  audioOpus = report.data.audioOpus || '';
   slug = report.id.replace(/\.md$/, '');
 } else {
   // HTML report
@@ -80,6 +82,7 @@ const tocHeadings = headings.filter((h: any) => h.depth === 2 || h.depth === 3);
   slug={slug}
   headings={headings}
   audio={audio}
+  audioOpus={audioOpus}
 >
   <!-- 1. Title -->
   <h1>{title}</h1>

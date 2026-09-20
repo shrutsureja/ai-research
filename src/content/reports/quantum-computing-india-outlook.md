@@ -5,6 +5,7 @@ version: "1.0.0"
 date: 2026-09-20
 tags: ["quantum-computing", "india", "deep-tech", "technology-policy"]
 audio: "/audio/quantum-computing-india-outlook.mp3"
+audioOpus: "/audio/quantum-computing-india-outlook.webm"
 ---
 
 **Status: September 2026**
