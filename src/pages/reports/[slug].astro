@@ -35,6 +35,7 @@ let date = '';
 let summary = '';
 let tags: string[] = [];
 let slug = '';
+let audio = '';
 let Content: any = null;
 let htmlContent = '';
 
@@ -47,6 +48,7 @@ if (type === 'md') {
   date = report.data.date.toISOString();
   summary = report.data.summary;
   tags = report.data.tags;
+  audio = report.data.audio || '';
   slug = report.id.replace(/\.md$/, '');
 } else {
   // HTML report
@@ -77,6 +79,7 @@ const tocHeadings = headings.filter((h: any) => h.depth === 2 || h.depth === 3);
   tags={tags}
   slug={slug}
   headings={headings}
+  audio={audio}
 >
   <!-- 1. Title -->
   <h1>{title}</h1>

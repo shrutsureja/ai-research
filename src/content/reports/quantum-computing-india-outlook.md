@@ -4,6 +4,7 @@ summary: "A September 2026 assessment of quantum computing's technical maturity,
 version: "1.0.0"
 date: 2026-09-20
 tags: ["quantum-computing", "india", "deep-tech", "technology-policy"]
+audio: "/audio/quantum-computing-india-outlook.mp3"
 ---
 
 **Status: September 2026**

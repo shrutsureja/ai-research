@@ -1,7 +1,33 @@
 ---
-// Client-side report narration using the browser's Web Speech API.
-// No API key, server, or generated audio files are required.
+// Prefer a generated audio track when a report provides one. The browser's
+// Web Speech API remains the zero-cost fallback for other reports.
+interface Props {
+  audioSrc?: string;
+}
+
+const { audioSrc } = Astro.props;
 ---
+
+{audioSrc ? (
+  <section class="read-aloud read-aloud-recorded" aria-label="Listen to this report">
+    <span class="read-aloud-recorded-label">🎧 Listen</span>
+    <audio controls preload="metadata" src={audioSrc}>
+      Your browser does not support audio playback.
+    </audio>
+    <label class="read-aloud-field">
+      <span>Speed</span>
+      <select id="recorded-audio-rate" aria-label="Playback speed">
+        <option value="0.8">0.8×</option>
+        <option value="1" selected>1×</option>
+        <option value="1.2">1.2×</option>
+        <option value="1.5">1.5×</option>
+        <option value="1.8">1.8×</option>
+        <option value="2">2×</option>
+      </select>
+    </label>
+    <span class="read-aloud-progress">Recorded voice</span>
+  </section>
+) : (
 
 <section class="read-aloud" id="read-aloud" aria-label="Listen to this report">
   <button class="read-aloud-primary" id="read-aloud-toggle" type="button" aria-pressed="false">
@@ -35,8 +61,28 @@
 
   <span class="read-aloud-progress" id="read-aloud-progress" aria-live="polite">Ready</span>
 </section>
+)}
 
-<script is:inline>
+{audioSrc && (
+  <script is:inline>
+    (() => {
+      const audio = document.querySelector('.read-aloud-recorded audio');
+      const rate = document.getElementById('recorded-audio-rate');
+      if (!(audio instanceof HTMLAudioElement) || !(rate instanceof HTMLSelectElement)) return;
+
+      const savedRate = localStorage.getItem('report-audio-rate');
+      if (savedRate && rate.querySelector(`option[value="${savedRate}"]`)) rate.value = savedRate;
+      audio.playbackRate = Number(rate.value);
+
+      rate.addEventListener('change', () => {
+        audio.playbackRate = Number(rate.value);
+        localStorage.setItem('report-audio-rate', rate.value);
+      });
+    })();
+  </script>
+)}
+
+{!audioSrc && <script is:inline>
   (() => {
     const root = document.getElementById('read-aloud');
     const toggle = document.getElementById('read-aloud-toggle');
@@ -320,7 +366,7 @@
     if ('onvoiceschanged' in synth) synth.addEventListener('voiceschanged', populateVoices);
     window.addEventListener('beforeunload', () => synth.cancel());
   })();
-</script>
+</script>}
 
 <style>
   .read-aloud {
@@ -376,6 +422,29 @@
   .read-aloud-stop {
     width: 2.35rem;
     padding-inline: 0 !important;
+  }
+
+  .read-aloud-recorded-label {
+    white-space: nowrap;
+    font-weight: 700;
+  }
+
+  .read-aloud-recorded audio {
+    flex: 1;
+    min-width: 12rem;
+    height: 2.35rem;
+  }
+
+  @media (max-width: 640px) {
+    .read-aloud-recorded {
+      flex-wrap: wrap;
+    }
+
+    .read-aloud-recorded audio {
+      order: 3;
+      flex-basis: 100%;
+      min-width: 0;
+    }
   }
 
   .read-aloud-field {
