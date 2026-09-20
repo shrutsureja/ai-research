@@ -36,7 +36,7 @@ $$
 |\psi\rangle = \alpha|0\rangle + \beta|1\rangle
 $$
 
-where the amplitudes \(\alpha\) and \(\beta\) determine the probabilities you obtain when measuring it.
+where the amplitudes $\alpha$ and $\beta$ determine the probabilities you obtain when measuring it.
 
 Three properties matter particularly:
 
@@ -46,7 +46,7 @@ Three properties matter particularly:
 
 **Interference** lets a quantum algorithm suppress unwanted computational paths and amplify useful ones.
 
-One common explanation says that a quantum computer "tries every possible answer simultaneously." That is misleading. With \(n\) qubits the quantum state involves \(2^n\) amplitudes, but you cannot simply read all \(2^n\) values. The algorithm has to manipulate those amplitudes so that measurement gives useful information.
+One common explanation says that a quantum computer "tries every possible answer simultaneously." That is misleading. With $n$ qubits the quantum state involves $2^n$ amplitudes, but you cannot simply read all $2^n$ values. The algorithm has to manipulate those amplitudes so that measurement gives useful information.
 
 That is why quantum algorithms—not merely large numbers of qubits—are so important. ([IBM][2])
 
